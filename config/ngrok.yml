@@ -1,0 +1,10 @@
+version: 2
+authtoken: ${NGROK_AUTHTOKEN}
+tunnels:
+  api:
+    addr: api:8000
+    proto: http
+    oauth:
+      provider: google
+      allow_emails:
+        - ${ALLOWED_EMAIL}  # Optional: restrict access to specific email

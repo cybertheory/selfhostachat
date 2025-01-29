@@ -1,0 +1,70 @@
+version: '3.8'
+
+services:
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    container_name: chatgpt-clone-api
+    env_file:
+      - ./config/.env
+    # Removed public port exposure since we're using ngrok
+    expose:
+      - "8000"
+    depends_on:
+      - db
+      - ollama
+    networks:
+      - chat_network
+    volumes:
+      - ./api:/app
+    restart: unless-stopped
+
+  ngrok:
+    image: ngrok/ngrok:latest
+    container_name: chatgpt-clone-ngrok
+    env_file:
+      - ./config/.env
+    environment:
+      - NGROK_CONFIG=/etc/ngrok.yml
+    volumes:
+      - ./config/ngrok.yml:/etc/ngrok.yml
+    ports:
+      - "4040:4040"  # Ngrok web interface
+    depends_on:
+      - api
+    networks:
+      - chat_network
+    restart: unless-stopped
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: chatgpt-clone-ollama
+    env_file:
+      - ./config/.env
+    volumes:
+      - ollama_data:/root/.ollama
+    networks:
+      - chat_network
+    restart: unless-stopped
+
+  db:
+    image: postgres:15
+    container_name: chatgpt-clone-db
+    env_file:
+      - ./config/.env
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    expose:
+      - "5432"
+    networks:
+      - chat_network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  ollama_data:
+
+networks:
+  chat_network:
+    driver: bridge
